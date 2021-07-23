@@ -58,9 +58,9 @@ class HistoSegNetV1:
 
         # Define folder paths
         cur_path = os.path.abspath(os.path.curdir)
-        self.data_dir = os.path.join(cur_path, 'data')
-        self.gt_dir = os.path.join(cur_path, 'gt')
-        self.img_dir = os.path.join(cur_path, 'img')
+        self.data_dir = os.path.join(cur_path, 'hen/data')
+        self.gt_dir = os.path.join(cur_path, 'hsn/gt')
+        self.img_dir = os.path.join(cur_path, 'hsn/img')
         self.tmp_dir = os.path.join(cur_path, 'tmp', self.input_name)
         self.out_dir = os.path.join(cur_path, 'out', self.input_name)
         input_dir = os.path.join(self.img_dir, self.input_name)
