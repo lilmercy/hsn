@@ -1,9 +1,10 @@
 import os
 import numpy as np
-import pydensecrf.densecrf as dcrf
+import pydensecrf as dcrf
+#import pydensecrf.densecrf as dcrf  # always import failed with "No module named pydensecrf.desencrf"
 from pydensecrf.utils import unary_from_softmax
 import matplotlib
-matplotlib.use("TkAgg")
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 class DenseCRF:
