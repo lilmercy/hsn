@@ -10,11 +10,11 @@ import matplotlib.pyplot as plt
 import time
 import math
 
-from .adp import Atlas
-from .utilities import *
-from .histonet import HistoNet
-from .gradcam import GradCAM
-from .densecrf import DenseCRF
+from hsn.hsn1.adp import Atlas
+from hsn.hsn1.utilities import *
+from hsn.hsn1.histonet import HistoNet
+from hsn.hsn1.gradcam import GradCAM
+from hsn.hsn1.densecrf import DenseCRF
 
 OVERLAY_R = 0.75
 
@@ -58,7 +58,7 @@ class HistoSegNetV1:
 
         # Define folder paths
         cur_path = os.path.abspath(os.path.curdir)
-        self.data_dir = os.path.join(cur_path, 'hen/data')
+        self.data_dir = os.path.join(cur_path, 'hsn/data')
         self.gt_dir = os.path.join(cur_path, 'hsn/gt')
         self.img_dir = os.path.join(cur_path, 'hsn/img')
         self.tmp_dir = os.path.join(cur_path, 'tmp', self.input_name)
