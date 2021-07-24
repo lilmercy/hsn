@@ -5,7 +5,7 @@ import cv2
 import matplotlib
 import numpy.matlib
 
-matplotlib.use("TkAgg")
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import time
 import math
