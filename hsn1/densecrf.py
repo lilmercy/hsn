@@ -7,6 +7,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+# 定义一个实现dense CRF (稠密条件随机场)的类
 class DenseCRF:
     """Class for implementing a dense CRF"""
 
