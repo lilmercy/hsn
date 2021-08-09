@@ -28,24 +28,25 @@ class GradCAM:
             The indices of the images
         pred_class_inds : numpy 1D array (size: num_pass_threshold) -- 预测的类别索引, 一维 numpy 数组（大小: num_pass_threshold）
             The indices of the predicted classes
-        pred_scores : numpy 1D array (size: num_pass_threshold) -- 
+        pred_scores : numpy 1D array (size: num_pass_threshold) -- 预测类别评分, 一维 numpy 数组（大小: num_pass_threshold）
             The scores of the predicted classes
-        input_images_norm : numpy 4D array (size: B x H x W x 3)
+        input_images_norm : numpy 4D array (size: B x H x W x 3) -- 归一化的输入图像, 四维 numpy 数组（大小: B x H x W x 3）
             The normalized input images
-        atlas : hsn_v1.adp.Atlas object
+        atlas : hsn_v1.adp.Atlas object -- 数字病理学对象图集
             The Atlas of Digital Pathology object
-        valid_classes : list
+        valid_classes : list -- 对当前问题的有效分割类别
             The segmentation classes valid for the current problem
 
-        Returns
+        Returns（返回值）
         -------
-        gradcam : numpy 3D array (size: num_pass_threshold x H x W)
+        gradcam : numpy 3D array (size: num_pass_threshold x H x W) -- 当前批次的预测 图像/类别的 Grad-CAM（梯度加权类别激活映射） 连续值
             The Grad-CAM continuous values for predicted images/classes of the current batch
         """
-
-        # Find number of HTTs across all images that passed their thresholds
+        
+        # 查找通过阈值的所有图像的 HTT（组织学类型）数量
+        # 设定图像索引数组的长度为通过阈值的图像的 HTT（组织学类型）数量
         num_pass_threshold = len(pred_image_inds)
-
+        # 
         gradcam = np.zeros((num_pass_threshold, self.size[0], self.size[1]))
         num_batches = (num_pass_threshold + self.batch_size - 1) // self.batch_size
         pred_scores_3d = np.expand_dims(np.expand_dims(pred_scores, axis=1), axis=1)
