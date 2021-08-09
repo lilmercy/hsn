@@ -7,10 +7,11 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-# 定义一个实现dense CRF (稠密条件随机场)的类
+# 定义一个实现dense CRF (全连接条件随机场)的类
 class DenseCRF:
     """Class for implementing a dense CRF"""
-
+   
+    # 设定一些初始参数
     def __init__(self):
         self.gauss_sxy = 3
         self.gauss_compat = 30
@@ -18,40 +19,46 @@ class DenseCRF:
         self.bilat_srgb = 20
         self.bilat_compat = 50
         self.n_infer = 5
-
+   
+    # 从文件中加载全连接（稠密）条件随机场的配置
     def load_config(self, path):
         """Load dense CRF configurations from file"""
-
+        # 如果存在路径path, 则读写磁盘中path的数据, 并将config[0]设置为初始值
         if os.path.exists(path):
             config = np.load(path)
-            self.gauss_sxy, self.gauss_compat, self.bilat_sxy, self.bilat_srgb, self.bilat_compat, self.n_config = \
-            config[0]
+            self.gauss_sxy, self.gauss_compat, self.bilat_sxy, self.bilat_srgb, self.bilat_compat, self.n_config = config[0]
         else:
+            # 如果不存在路径path, 报错
             print('Warning: dense CRF config file ' + path + ' does not exist - using defaults')
-
+    
+    # 运行dense CRF(全连接条件随机场), 输入: 概率图和输入图像
     def process(self, probs, images):
         """
         Run dense CRF, given probability map and input image
 
-        Parameters
+        Parameters（输入参数）
         ----------
-        probs : numpy 4D array
-            The class probability maps, in batch
-        images : numpy 4D array
+        probs : numpy 4D array -- 代表类别概率映射的一个 numpy 四维数组
+            The class probability maps, in batch 
+        images : numpy 4D array -- 代表原始输入图像的一个 numpy 四维数组
             The original input images, in batch
 
-        Returns
+        Returns（返回 / 输出）
         -------
-        maxconf_crf : numpy 3D array
+        maxconf_crf : numpy 3D array -- 来自 dense CRF 的离散类别分割映射 三维 numpy 数组
             The discrete class segmentation map from dense CRF, in batch
-        crf : numpy 4D array
+        crf : numpy 4D array -- 来自 dense CRF 的连续类别概率映射 四维 numpy 数组
             The continuous class probability map from dense CRF, in batch
         """
 
-        # Set up variable sizes
+        # 设置可变参数（尺寸大小）
+        # probs（类别概率映射）四维数组矩阵第一维度的长度（行数）设置为 num_input_images（输入图像数量）
         num_input_images = probs.shape[0]
+        # images（原始输入图像）四维数组矩阵第二维度的长度（列数）设置为 num_classes（类别数量）
         num_classes = probs.shape[1]
+        # 从输入图像的四维数组的第 2 到第 4 数组值 设置为size
         size = images.shape[1:3]
+        # 
         crf = np.zeros((num_input_images, num_classes, size[0], size[1]))
         for iter_input_image in range(num_input_images):
             pass_class_inds = np.where(np.sum(np.sum(probs[iter_input_image], axis=1), axis=1) > 0)
