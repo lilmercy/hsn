@@ -52,7 +52,7 @@ class GradCAM:
         pred_scores_3d = np.expand_dims(np.expand_dims(pred_scores, axis=1), axis=1)
         pred_class_inds_full = atlas.convert_class_inds(pred_class_inds, valid_classes, atlas.level5)
 
-        # For each batch, obtain Grad-CAM, then multiply by confidence score
+        # 对于每个批次，获取 Grad-CAM（梯度加权类别激活映射），然后乘以置信度分数
         for iter_batch in range(num_batches):
             start = iter_batch * self.batch_size
             end = min((iter_batch + 1) * self.batch_size, num_pass_threshold)
@@ -60,32 +60,33 @@ class GradCAM:
                                                     pred_class_inds_full[start:end], self.final_layer)
             gradcam[start:end] = cur_gradcam_batch * pred_scores_3d[start:end]
         return gradcam
-
+    # 为单批量的图像生成 Grad-CAM
     def grad_cam_batch(self, input_model, images, classes, layer_name):
         """Generate Grad-CAM for a single batch of images
 
-        Parameters
+        Parameters（输入参数）
         ----------
-        input_model : keras.engine.sequential.Sequential object
+        input_model : keras.engine.sequential.Sequential object -- 运行 Grad-CAM 的输入模型, 内置在keras中
             The input model to run Grad-CAM on
-        images : numpy 4D array (size: B x H x W x 3)
+        images : numpy 4D array (size: B x H x W x 3) -- 当前批次中归一化的输入图像, 四维 numpy 数组（大小: B x H x W x 3）
             The normalized input images in the current batch
-        classes : numpy 1D array
+        classes : numpy 1D array -- 当前批次中预测类别的索引, 一维 numpy 数组
             The indices of the predicted classes in the current batch
-        layer_name : str
+        layer_name : str -- 要运行 Grad-CAM 的模型层的名称
             The name of the model layer to run Grad-CAM on
 
-        Returns
+        Returns（输出 / 返回值）
         -------
-        heatmaps : numpy 3D array (size: B x H x W)
+        heatmaps : numpy 3D array (size: B x H x W) -- 当前批次生成的 Grad-CAM （heatmap, 热力图）, 三维 numpy 数组（大小: B x H x W） 
             The generated Grad-CAM for the current batch
         """
-
+        # tf.gather_nd(params, indices, name=None) -- 其主要功能是根据indices描述的索引, 提取params上的元素, 重新构建一个tensor
+        # 
         y_c = tf.gather_nd(input_model.layers[-2].output, np.dstack([range(images.shape[0]), classes])[0])
         conv_output = input_model.get_layer(layer_name).output
 
+        # 通过 L2 范数对张量进行归一化的效用函数
         def normalize(x):
-            # utility function to normalize a tensor by its L2 norm
             return x / (K.sqrt(K.mean(K.square(x))) + 1e-5)
 
         grads = normalize(K.gradients(y_c, conv_output))[0]
@@ -103,25 +104,26 @@ class GradCAM:
             heatmaps[i] = new_cams[i] / np.maximum(np.max(new_cams[i]), 1e-7)
 
         return heatmaps
-
+    
+    # 将序列化的 Grad-CAM 扩展为四维 numpy 数组, 为不可预测的类插入零数组
     def expand_image_wise(self, gradcam_serial, pred_image_inds, pred_class_inds, valid_classes):
         """Expand the serialized Grad-CAM into 4D array, i.e. insert arrays of zeroes for unpredicted classes
 
-        Parameters
+        Parameters（输入参数）
         ----------
-        gradcam_serial : numpy 3D array (size: self.num_imgs x W x H)
+        gradcam_serial : numpy 3D array (size: self.num_imgs x W x H) -- 以串行形式, 当前批次中的预测类别生成的 Grad-CAM, 三维 numpy 数组（大小: self.num_imgs x W x H）
             The generated Grad-CAMs for predicted classes in the current batch, in serial form
-        pred_image_inds : numpy 1D array (size: self.num_imgs)
+        pred_image_inds : numpy 1D array (size: self.num_imgs) -- 以串行形式, 当前批次中的图像的索引, 一维 numpy 数组（大小: self.num_imgs）
             The indices of the images in the current batch, in serial form
-        pred_class_inds : numpy 1D array (size: self.num_imgs)
+        pred_class_inds : numpy 1D array (size: self.num_imgs) -- 以串行形式, 当前批次中预测类别的索引, 一维 numpy 数组（大小: self.num_imgs）
             The indices of the predicted classes in the current batch, in serial form
-        valid_classes : list
+        valid_classes : list -- 对当前问题有效的分割类别
             The segmentation classes valid for the current problem
 
-        Returns
+        Returns（输出 / 返回值）
         -------
         gradcam_image_wise : numpy 4D array (size: self.num_imgs x C x H x W), where C = number of classes
-            The serialized Grad-CAM for the current batch
+            The serialized Grad-CAM for the current batch -- 当前批次的序列化 Grad-CAM
         """
 
         gradcam_image_wise = np.zeros((self.num_imgs, len(valid_classes), self.size[0], self.size[1]))
@@ -132,7 +134,7 @@ class GradCAM:
             if len(cur_class_inds) > 0:
                 gradcam_image_wise[iter_input_file, cur_class_inds] = gradcam_serial[cur_serial_inds]
         return gradcam_image_wise
-
+    # 通过htt（组织学类型）修改
     def modify_by_htt(self, gradcam, images, atlas, htt_class, gradcam_adipose=None):
         """Generates non-foreground class activations and appends to the foreground class activations
 
