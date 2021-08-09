@@ -6,9 +6,10 @@ from scipy.ndimage import gaussian_filter
 import scipy
 import matplotlib.pyplot as plt
 
+# Grad-CAM（梯度加权类别激活映射）及 HTT（histological tissue type, 组织学类型）modifications 修改类
 class GradCAM:
     """Class for Grad-CAM and HTT modifications"""
-
+    # 定义初始参数
     def __init__(self, params):
         self.htt_mode = params['htt_mode']
         self.size = params['size']
@@ -17,17 +18,17 @@ class GradCAM:
         self.cnn_model = params['cnn_model']
         self.final_layer = params['final_layer']
         self.tmp_dir = params['tmp_dir']
-
+    # 定义一个生成 Grad-CAM（梯度加权类别激活映射）的函数
     def gen_gradcam(self, pred_image_inds, pred_class_inds, pred_scores, input_images_norm, atlas, valid_classes):
         """Generate Grad-CAM
 
-        Parameters
+        Parameters（输入参数）
         ----------
-        pred_image_inds : numpy 1D array (size: num_pass_threshold)
+        pred_image_inds : numpy 1D array (size: num_pass_threshold) -- 图像索引, 一维 numpy 数组（大小: num_pass_threshold）
             The indices of the images
-        pred_class_inds : numpy 1D array (size: num_pass_threshold)
+        pred_class_inds : numpy 1D array (size: num_pass_threshold) -- 预测的类别索引, 一维 numpy 数组（大小: num_pass_threshold）
             The indices of the predicted classes
-        pred_scores : numpy 1D array (size: num_pass_threshold)
+        pred_scores : numpy 1D array (size: num_pass_threshold) -- 
             The scores of the predicted classes
         input_images_norm : numpy 4D array (size: B x H x W x 3)
             The normalized input images
