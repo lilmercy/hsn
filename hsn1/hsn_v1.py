@@ -203,7 +203,7 @@ class HistoSegNetV1:
         if self.verbosity == 'NORMAL':
             print(' (%s seconds)' % (time.time() - start_time))
     
-    # 查找 HTT 对数逆频率
+    # 查找 / 计算 HTT 对数逆频率
     def analyze_img(self):
         """Find HTT log inverse frequencies"""
 
@@ -219,7 +219,7 @@ class HistoSegNetV1:
                 y = y / np.sum(y)
                 return y
 
-            self.httclass_loginvfreq = []
+            self.httclass_loginvfreq = [] # 0 -- morph, 1 -- func
             for iter_httclass, htt_class in enumerate(self.htt_classes):
                 httweights_path = os.path.join(self.tmp_dir, 'httweights_' + htt_class + '.npy') # htt 权重路径
                 if not os.path.exists(httweights_path):
@@ -236,47 +236,48 @@ class HistoSegNetV1:
                     np.save(httweights_path, self.httclass_loginvfreq[iter_httclass])
                 else:
                     self.httclass_loginvfreq.append(np.load(httweights_path))
-
+    # 加载 HistoSegNet 的第一阶段分类 CNN (HistoNet) 
     def load_histonet(self, params):
         """Load classification CNN (HistoNet) as first stage of HistoSegNet"""
 
-        # Save user-defined settings
-        self.model_name = params['model_name']
+        # 保存用户定义的设置
+        self.model_name = params['model_name'] # 模型名称
 
-        # Validate user-defined settings
+        # 验证用户定义的设置
         model_threshold_path = os.path.join(self.data_dir, self.model_name + '.mat')
         model_json_path = os.path.join(self.data_dir, self.model_name + '.json')
         model_h5_path = os.path.join(self.data_dir, self.model_name + '.h5')
         if not os.path.exists(model_threshold_path) or not os.path.exists(model_json_path) or not \
                 os.path.exists(model_h5_path):
             raise Exception('The files corresopnding to user-defined model ' + self.model_name + ' do not exist in ' +
-                            self.data_dir)
+                            self.data_dir) # 异常处理
 
         if self.verbosity == 'NORMAL':
             print('Loading HistoNet', end='')
             start_time = time.time()
-        # Load HistoNet
+        # 加载 HistoNet
         self.hn = HistoNet(params={'model_dir': self.data_dir, 'model_name': self.model_name,
                                    'batch_size': self.batch_size, 'relevant_inds': self.atlas.level3_valid_inds,
                                    'input_name': self.input_name, 'class_names': self.atlas.level5})
         self.hn.build_model()
 
-        # Load HistoNet HTT score thresholds
+        # 加载 HistoNet HTT 分数阈值
         self.hn.load_thresholds(self.data_dir, self.model_name)
         if self.verbosity == 'NORMAL':
             print(' (%s seconds)' % (time.time() - start_time))
 
+    # 以批处理模式运行 HistoSegNet
     def run_batch(self):
         """Run HistoSegNet in batch mode"""
 
-        num_batches = (len(self.input_files_all) + self.batch_size - 1) // self.batch_size
+        num_batches = (len(self.input_files_all) + self.batch_size - 1) // self.batch_size # batch 数量
         for iter_batch in range(num_batches):
             if self.verbosity == 'NORMAL':
                 print('\tBatch #' + str(iter_batch + 1) + ' of ' + str(num_batches))
                 batch_start_time = time.time()
 
-            # a. Load image(s)expand_image_wise
-            if self.verbosity == 'NORMAL':
+            # a. 加载图像 expand_image_wise
+            if self.verbosity == 'NORMAL': # 调试消息的详细程度 ’NORMAL‘
                 print('\t\tLoading images', end='')
                 start_time = time.time()
             start = iter_batch * self.batch_size
@@ -286,7 +287,7 @@ class HistoSegNetV1:
             if self.verbosity == 'NORMAL':
                 print(' (%s seconds)' % (time.time() - start_time))
 
-            # b. Load ground-truth data, if available
+            # b. 加载ground-truth data（if available）
             if self.verbosity == 'NORMAL':
                 print('\t\tLoading ground-truth data', end='')
                 start_time = time.time()
@@ -294,7 +295,8 @@ class HistoSegNetV1:
             if self.verbosity == 'NORMAL':
                 print(' (%s seconds)' % (time.time() - start_time))
 
-            # c. Segment image(s) with HistoSegNetV1, saving/loading to/from tmp files if so requested
+            # c. 使用 HistoSegNetV1 分割图像，如果需要，可以从 tmp 文件保存/加载
+	    # Segment image(s) with HistoSegNetV1, saving/loading to/from tmp files if so request
             if self.verbosity == 'NORMAL':
                 print('\t\tSegmenting images')
                 start_time = time.time()
@@ -302,7 +304,7 @@ class HistoSegNetV1:
             if self.verbosity == 'NORMAL':
                 print('\t\t(%s seconds)' % (time.time() - start_time))
 
-            # d. Evaluate segmentation quality, if available
+            # d. 评估分割质量 Evaluate segmentation quality, if available
             if self.gt_mode == 'on' and self.run_level == 3:
                 if self.verbosity == 'NORMAL':
                     print('\t\tEvaluating segmentation quality', end='')
@@ -328,12 +330,13 @@ class HistoSegNetV1:
             glas_confscores_path = os.path.join(self.out_dir, 'glas_confscores.csv')
             res = pd.DataFrame.from_dict(dict(items))
             res.to_csv(glas_confscores_path)
-
+    
+    # 从文件路径中读取图像文件并对其进行标准化
     def load_norm_imgs(self):
         """Read image files from filepaths and normalize them"""
 
-        input_dir = os.path.join(self.img_dir, self.input_name)
-        # Load raw images
+        input_dir = os.path.join(self.img_dir, self.input_name) 
+        # 加载原始图像
         self.orig_images = [None] * len(self.input_files_batch)
         self.orig_images_cropped = [None] * len(self.input_files_batch)
         self.orig_sizes = [None] * len(self.input_files_batch)
@@ -344,10 +347,11 @@ class HistoSegNetV1:
             self.orig_images[iter_input_file] = read_image(input_path)
             self.orig_sizes[iter_input_file] = self.orig_images[iter_input_file].shape[:2]
             downsampled_size = [round(x / self.down_fac) for x in self.orig_sizes[iter_input_file]]
-
+	    
+	    # 如果下采样图像小于补丁大小，则先镜像，然后下采样
             # If downsampled image is smaller than the patch size, then mirror pad first, then downsample
             if downsampled_size[0] < self.input_size[0] or downsampled_size[1] < self.input_size[1]:
-                pad_vert = math.ceil(
+                pad_vert = math.ceil( # ceil() -- 返回其上入整数（向上取整）
                     max(self.input_size[0] * self.down_fac - self.orig_sizes[iter_input_file][0], 0) / 2)
                 pad_horz = math.ceil(
                     max(self.input_size[1] * self.down_fac - self.orig_sizes[iter_input_file][1], 0) / 2)
@@ -365,11 +369,12 @@ class HistoSegNetV1:
                 self.orig_images[iter_input_file], self.down_fac, self.input_size)
             start += np.prod(np.array(self.num_crops[iter_input_file]))
 
-        # Normalize images
+        # 图像归一化 / 标准化
         self.input_images_norm = np.zeros_like(self.input_images)
         for iter_input_image, input_image in enumerate(self.input_images):
             self.input_images_norm[iter_input_image] = self.hn.normalize_image(input_image, self.htt_mode == 'glas')
-
+    
+    # 从文件加载 ground-truth 注释图像并生成用于调试的图例
     def load_gt(self):
         """Load ground-truth annotation images from file and generate legends for debugging"""
 
