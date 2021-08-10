@@ -15,24 +15,44 @@ from hsn.hsn1.utilities import *
 from hsn.hsn1.histonet import HistoNet
 from hsn.hsn1.gradcam import GradCAM
 from hsn.hsn1.densecrf import DenseCRF
-
+# 重叠率？
 OVERLAY_R = 0.75
 
+# 整个 HistoSegNet 的包装类
 class HistoSegNetV1:
     """A wrapper class for the entire HistoSegNet"""
-
+    # 定义初始参数
     def __init__(self, params):
-        self.input_name = params['input_name']
-        self.input_size = params['input_size']
-        self.input_mode = params['input_mode']
-        self.down_fac = params['down_fac']
-        self.batch_size = params['batch_size']
+        self.input_name = params['input_name'] # 待处理的分割集图像名称  {'01_tuning_patch', '02_glas_full'}
+        self.input_size = params['input_size'] # 输入图像的大小
+        self.input_mode = params['input_mode'] # 输入图像的类型 {'patch', 'wsi'}
+        self.down_fac = params['down_fac'] # 对输入图像进行下采样以确保等效分辨率的标量 0 <= down_fac(float) <= 1
+        self.batch_size = params['batch_size'] # 输入图像的批量大小
+       
+        # htt_mode -- 从图像中分割的类的类型  {'both', 'morph', 'func', 'glas'} 
+	    #（both -- morph && func
+		# morph -- morphological 形态学类型
+		# func -- functional 功能类型
+		# glas -- glandular 腺体or非腺体）
         self.htt_mode = params['htt_mode']
-        self.gt_mode = params['gt_mode']
+        
+        self.gt_mode = params['gt_mode'] # 是否根据ground-truth注释评估分割结果 {'on', 'off'}
+        
+        # run_level -- 在HistoSegNet运行的最后阶段 {1, 2, 3}
+		#（1 -- the first stage CNN confidence scores 类置信得分阶段
+		# 2 -- the third stage modified Grad-CAMs 改良的梯度加权类激活映射阶段
+		# 3 -- the fourth stage dense CRF segmentation masks 密集条件随机场分割掩码）
         self.run_level = params['run_level']
+        
+        # save_types -- 要保存用于调试的类型 [{0, 1}, {0, 1}, {0, 1}, {0, 1}]
+		#（HTT confidence scores: save (1), do not save (0)
+		# Continuous Grad-CAMs: save (1), do not save (0)
+		# Discrete segmentation masks: save (1), do not save (0)
+		# Summary images: save (1), do not save (0)
         self.save_types = params['save_types']
-        self.verbosity = params['verbosity']
-
+        
+        self.verbosity = params['verbosity'] # 调试消息的详细程度 {'NORMAL', 'QUIET'}
+        # 异常处理
         if len(self.input_size) != 2:
             raise Exception('User-defined variable input_size must be a list of length 2!')
         if type(self.input_size[0]) != int or self.input_size[0] < 1 or \
@@ -56,7 +76,7 @@ class HistoSegNetV1:
         if self.verbosity not in ['NORMAL', 'QUIET']:
             raise Exception('User-defined variable verbosity ' + self.verbosity + ' is not in {\'NORMAL\', \'QUIET\'}')
 
-        # Define folder paths
+        # 定义文件夹路径
         cur_path = os.path.abspath(os.path.curdir)
         self.data_dir = os.path.join(cur_path, 'hsn/data')
         self.gt_dir = os.path.join(cur_path, 'hsn/gt')
@@ -67,14 +87,15 @@ class HistoSegNetV1:
         if not os.path.exists(input_dir):
             raise Exception('Could not find user-defined input directory ' + input_dir)
 
-        # Create folders if they don't exist
+        # 如果文件夹路径不存在则新建文件夹
         mkdir_if_nexist(self.tmp_dir)
         mkdir_if_nexist(self.out_dir)
 
         # Read in pre-defined ADP taxonomy
+        # 读入预定义的分类方法
         self.atlas = Atlas()
 
-        # Define valid classes and colours
+        # 定义有效的类别和颜色
         self.httclass_valid_classes = []
         self.httclass_valid_colours = []
         if self.htt_mode in ['glas']:
@@ -87,9 +108,9 @@ class HistoSegNetV1:
             self.httclass_valid_classes.append(self.atlas.func_valid_classes)
             self.httclass_valid_colours.append(self.atlas.func_valid_colours)
 
-        # Define GT paths
+        # 定义 ground-truth 路径
         self.htt_classes = []
-        if self.gt_mode == 'on':
+        if self.gt_mode == 'on': # 根据ground-truth注释评估分割结果
             self.httclass_gt_dirs = []
             self.intersect_counts = {}
             self.intersect_counts['GradCAM'] = []
@@ -112,7 +133,7 @@ class HistoSegNetV1:
             if self.gt_mode == 'on':
                 glas_gt_dir = os.path.join(self.gt_dir, self.input_name, self.htt_mode)
                 if not os.path.exists(glas_gt_dir):
-                    raise Exception('GlaS GT directory does not exist: ' + glas_gt_dir)
+                    raise Exception('GlaS GT directory does not exist: ' + glas_gt_dir) # 异常处理
                 self.httclass_gt_dirs.append(glas_gt_dir)
                 for s in ['GradCAM', 'Adjust', 'CRF']:
                     self.intersect_counts[s].append(np.zeros((len(self.atlas.glas_valid_classes))))
@@ -121,7 +142,7 @@ class HistoSegNetV1:
                     self.gt_counts[s].append(np.zeros((len(self.atlas.glas_valid_classes))))
             self.glas_confscores = []
         if self.htt_mode in ['both', 'morph']:
-            # Define morphological type variables
+            # 定义形态学类型变量
             self.htt_classes.append('morph')
             if self.gt_mode == 'on':
                 morph_gt_dir = os.path.join(self.gt_dir, self.input_name, 'morph')
@@ -141,12 +162,12 @@ class HistoSegNetV1:
                 self.gt_counts['Adjust'].append(np.zeros((len(self.atlas.morph_valid_classes))))
                 self.gt_counts['CRF'].append(np.zeros((len(self.atlas.morph_valid_classes))))
         if self.htt_mode in ['both', 'func']:
-            # Define functional type variables
+            # 定义功能性类型变量
             self.htt_classes.append('func')
             if self.gt_mode == 'on':
                 func_gt_dir = os.path.join(self.gt_dir, self.input_name, 'func')
                 if not os.path.exists(func_gt_dir):
-                    raise Exception('Func GT directory does not exist: ' + func_gt_dir)
+                    raise Exception('Func GT directory does not exist: ' + func_gt_dir) # 异常处理
                 self.httclass_gt_dirs.append(func_gt_dir)
                 self.intersect_counts['GradCAM'].append(np.zeros((len(self.atlas.func_valid_classes))))
                 self.intersect_counts['Adjust'].append(np.zeros((len(self.atlas.func_valid_classes))))
@@ -160,14 +181,15 @@ class HistoSegNetV1:
                 self.gt_counts['GradCAM'].append(np.zeros((len(self.atlas.func_valid_classes))))
                 self.gt_counts['Adjust'].append(np.zeros((len(self.atlas.func_valid_classes))))
                 self.gt_counts['CRF'].append(np.zeros((len(self.atlas.func_valid_classes))))
-
+   
+    # 从输入文件夹目录中查找图像
     def find_img(self):
         """Find images from input directory"""
 
-        if self.verbosity == 'NORMAL':
+        if self.verbosity == 'NORMAL': # 调试消息的详细程度为‘NORMAL’
             print('Finding images', end='')
-            start_time = time.time()
-        input_dir = os.path.join(self.img_dir, self.input_name)
+            start_time = time.time() # 记录开始时间
+        input_dir = os.path.join(self.img_dir, self.input_name) # 定义输入文件夹
         if self.input_mode == 'patch':
             self.input_files_all = [x for x in os.listdir(input_dir) if os.path.isfile(os.path.join(input_dir, x)) and
                                     os.path.splitext(x)[-1].lower() == '.png']
