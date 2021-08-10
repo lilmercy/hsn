@@ -147,7 +147,7 @@ class HistoSegNetV1:
             if self.gt_mode == 'on':
                 morph_gt_dir = os.path.join(self.gt_dir, self.input_name, 'morph')
                 if not os.path.exists(morph_gt_dir):
-                    raise Exception('Morph GT directory does not exist: ' + morph_gt_dir)
+                    raise Exception('Morph GT directory does not exist: ' + morph_gt_dir) # 异常处理
                 self.httclass_gt_dirs.append(morph_gt_dir)
                 self.intersect_counts['GradCAM'].append(np.zeros((len(self.atlas.morph_valid_classes))))
                 self.intersect_counts['Adjust'].append(np.zeros((len(self.atlas.morph_valid_classes))))
@@ -190,7 +190,11 @@ class HistoSegNetV1:
             print('Finding images', end='')
             start_time = time.time() # 记录开始时间
         input_dir = os.path.join(self.img_dir, self.input_name) # 定义输入文件夹
-        if self.input_mode == 'patch':
+        if self.input_mode == 'patch': 
+	    # os.listdir() -- 返回指定的文件夹包含的文件或文件夹的名字的列表
+	    # os.path.join() -- 判断对象(需提供绝对路径)是否为文件
+	    # os.path.splitext() -- 分离文件名与拓展名
+	    # 检查文件路径合法性
             self.input_files_all = [x for x in os.listdir(input_dir) if os.path.isfile(os.path.join(input_dir, x)) and
                                     os.path.splitext(x)[-1].lower() == '.png']
         elif self.input_mode == 'wsi':
@@ -198,13 +202,16 @@ class HistoSegNetV1:
                                     os.path.splitext(x)[0].split('_f')[1] == '1']
         if self.verbosity == 'NORMAL':
             print(' (%s seconds)' % (time.time() - start_time))
-
+    
+    # 查找 HTT 对数逆频率
     def analyze_img(self):
         """Find HTT log inverse frequencies"""
 
         if self.gt_mode == 'on':
+	    # 定义 转化为对数逆频率 函数
             def convert_to_log_freq(x):
-                is_zero = np.where(x == 0)
+		# np.where(condition) -- 返回满足 condition 的元素坐标
+                is_zero = np.where(x == 0) # 满足x == 0 的坐标
                 x_log = np.log(x)
                 x_log[is_zero] = 0
                 y = np.sum(x_log) / x_log
@@ -214,7 +221,7 @@ class HistoSegNetV1:
 
             self.httclass_loginvfreq = []
             for iter_httclass, htt_class in enumerate(self.htt_classes):
-                httweights_path = os.path.join(self.tmp_dir, 'httweights_' + htt_class + '.npy')
+                httweights_path = os.path.join(self.tmp_dir, 'httweights_' + htt_class + '.npy') # htt 权重路径
                 if not os.path.exists(httweights_path):
                     num_classes = len(self.httclass_valid_classes[iter_httclass])
                     gt_counts = np.zeros((num_classes))
