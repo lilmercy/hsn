@@ -1,7 +1,7 @@
 import os
 import numpy as np
 #import pydensecrf as dcrf
-import pydensecrf.pydensecrf.densecrf as dcrf  # always import failed with "No module named pydensecrf.desencrf"
+import Pydensecrf.pydensecrf.densecrf as dcrf  # always import failed with "No module named pydensecrf.desencrf"
 from pydensecrf.utils import unary_from_softmax
 import matplotlib
 matplotlib.use("Agg")
