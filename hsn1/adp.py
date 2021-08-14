@@ -13,12 +13,12 @@ class Atlas:
                        'G.O', 'G.N', 'T']
         self.level4 = ['E', 'E.M', 'E.T', 'E.P', 'C', 'C.D', 'C.L', 'H', 'H.E', 'H.K', 'H.Y', 'S', 'S.M', 'S.E',
                        'S.C', 'S.R', 'A', 'A.W', 'A.B', 'A.M', 'M', 'M.M', 'M.K', 'N', 'N.P', 'N.R', 'N.G', 'G',
-                       'G.O', 'G.N', 'T']
+                       'G.O', 'G.N', 'T'] # level1 + level2
         self.level5 = ['E', 'E.M', 'E.M.S', 'E.M.U', 'E.M.O', 'E.T', 'E.T.S', 'E.T.U', 'E.T.O', 'E.P', 'C', 'C.D',
                        'C.D.I', 'C.D.R', 'C.L', 'H', 'H.E', 'H.K', 'H.Y', 'S', 'S.M', 'S.M.C', 'S.M.S', 'S.E',
                        'S.C', 'S.C.H', 'S.R', 'A', 'A.W', 'A.B', 'A.M', 'M', 'M.M', 'M.K', 'N', 'N.P', 'N.R',
                        'N.R.B', 'N.R.A', 'N.G', 'N.G.M', 'N.G.A', 'N.G.O', 'N.G.E', 'N.G.R', 'N.G.W', 'N.G.T',
-                       'G', 'G.O', 'G.N', 'T']
+                       'G', 'G.O', 'G.N', 'T'] #level1 + level2 + level3
        
         # enumerate -- 用于将一个可遍历的数据对象(如列表、元组或字符串)组合为一个索引序列，同时列出数据和数据下标，一般用在 for 循环当中
         # np.isin(a, b) -- 用于判定a中的元素在b中是否出现过，如果出现过返回True,否则返回False,最终结果为一个形状和a一模一样的数组
