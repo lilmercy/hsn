@@ -1,81 +1,55 @@
 # HistoSegNet (V1)
+### Original author: Lyndon Chan -- http://lyndonchan.github.io/
+### Original repo: https://github.com/lyndonchan/hsn_v1.git
+### Paper: https://sci-hub.mksa.top/10.1109/iccv.2019.01076
+# Requirement (I used)
++ I used Pycharm (Professional) and ssh sever
++ `python==3.6` (pycharm do not support python==3.5 intepreter)
++ `keras==2.2.4`
++ `tensorflow==1.13.1`
++ `numpy==1.16.2`
++ `cython==0.29.24`
++ `pydensecrf==1.0rc3`
++ `opencv-python-headless==4.5.3.56`
++ `scikit-image==0.14.2`
++ `scipy==1.2.0`
++ `pandas`
++ `matplotlib`
+# Setup (For reference only)
++ Create a conda environment for HistoSegNet  `conda create -n histo python==3.6`
++ Activate the conda environment  `conda activate histo`
 
-## Introduction
-![](/img.png)
++ Install packages
 
-We propose a new approach to Weakly-Supervised Semantic Segmentation (WSSS) with image label supervision for histopathology images, which trains on only patch-level annotations to infer pixel-level labels, called HistoSegNet (published in [ICCV 2019](http://openaccess.thecvf.com/content_ICCV_2019/html/Chan_HistoSegNet_Semantic_Segmentation_of_Histological_Tissue_Type_in_Whole_Slide_ICCV_2019_paper.html)). WSSS is useful for histopathology images because pixel-level prediction of tissue types facilitates further analysis by shape and texture, which can be indicative of disease.
+  `pip install -i https://pypi.douban.com/simple/ keras==2.2.4`
 
-![](/method.png)
+  `pip install -i https://pypi.douban.com/simple/ tensorflow==1.13.1`
 
-Unlike other approaches, no additional training is required beyond training the classification network and only simple modifications are applied to Grad-CAM to perform segmentation. Our approach involves four stages:
+  `pip install -i https://pypi.douban.com/simple/ numpy==1.16.2`
 
-1. Patch-level Classification CNN
-2. Pixel-level Segmentation (i.e. Grad-CAM)
-3. Inter-HTT Adjustments
-4. Segmentation Post-Processing (i.e. dense CRF)
+  `pip install -i https://pypi.douban.com/simple/ cython`
 
-We have provided the code here for easy installation and verification of the results presented in our paper submission. Pretrained models and sample images are provided for the ADP tuning set and the GlaS dataset.
+  `conda install -c conda-forge pydensecrf=1.0rc3`
 
-## Citing this repository
+  `pip install -i https://pypi.douban.com/simple/ opencv-python-headless==4.5.3.56`
 
-If you find this code useful in your research, please consider citing us:
+  `pip install -i https://pypi.douban.com/simple/ scipy==1.2.0`
 
-        @InProceedings{chan2019histosegnet,
-          author = {Chan, Lyndon and Hosseini, Mahdi S. and Rowsell, Corwyn and Plataniotis, Konstantinos N. and Damaskinos, Savvas},
-          title = {HistoSegNet: Semantic Segmentation of Histological Tissue Type in Whole Slide Images},
-          booktitle = {The IEEE International Conference on Computer Vision (ICCV)},
-          month = {October},
-          year = {2019}
-        }
+  `pip install -i https://pypi.douban.com/simple/ scikit-image==0.14.2 `
 
+  `pip install -i https://pypi.douban.com/simple/ pandas`
 
-## Getting Started
+  `pip install -i https://pypi.douban.com/simple/ matplotlib`
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
++ Run the demo
 
-## Prerequisites
+  `cd ./your code folder directory/`
 
-Mandatory
+  `python demo_01_segment_patches` for run the demo of segment patches
 
-* `python` (checked on 3.5)
-* `keras` (checked on 2.2.4)
-* `tensorflow` (checked on 1.13.1)
-* `numpy` (checked on 1.16.2)
-* `pydensecrf` (checked on 1.0rc3)
-* `cv2` / `opencv-python` (checked on 3.4.4.19)
-* `scipy` (checked on 1.2.0)
-* `skimage` / `scikit-image` (checked on 0.14.2)
+  `python demo_02_glas_patches`for run the demo glas patches
 
-Optional
-
-* `matplotlib` (checked on 3.0.2)
-* `jupyter`
-
-## Downloading data
-
-Download `hsn_data.zip` (226 MB) from OneDrive containing pretrained models, ground-truth annotations, and images [here](https://drive.google.com/open?id=1jG1ojQKmvGjjjrRhCkaH0FDWM61tSgjL) and extract the contents into your `hsn_v1` directory (i.e. three folders `data`, `gt`, `img`).
-
-## Run the demo batch scripts
-
-To run on the ADP tuning set:
-```
-python demo_01_segment_patches.py
-```
-
-To run on the GlaS set:
-```
-python demo_02_segment_glas_patches.py
-```
-
-## Run the demo notebooks
-Note: this requires Jupyter notebooks to be set up
-* `demo_01_segment_patches.ipynb`
-* `demo_02_segment_glas_patches.ipynb`
-
-## Examples
-
-### Patch level
-![](/examples_patch.png)
-
-### Slide level
-![](/examples_slide.png)
++ The segement result are in the 'out' folder
+### I will continue to improve this repo to better implement it, because this is a fabulous work for me.
+### If you need any help, please email me by lmxhrb@163.com.
+### Sincere respect and thanks to Lyndon Chan！
