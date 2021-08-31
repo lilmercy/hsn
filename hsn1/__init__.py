@@ -1,4 +1,4 @@
-# from .hsn import HistoSegNetV1
+# import hsn
 
 # from .adp import Atlas
 # from .gradcam import *

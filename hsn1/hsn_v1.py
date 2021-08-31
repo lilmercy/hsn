@@ -4,17 +4,28 @@ import pandas as pd
 import cv2
 import matplotlib
 import numpy.matlib
-
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import time
 import math
 
-from hsn.hsn1.adp import Atlas
-from hsn.hsn1.utilities import *
-from hsn.hsn1.histonet import HistoNet
-from hsn.hsn1.gradcam import GradCAM
-from hsn.hsn1.densecrf import DenseCRF
+# local
+#from hsn1.adp import *
+#from hsn1.densecrf import *
+#from hsn1.gradcam import *
+#from hsn1.histonet import *
+#from hsn1.utilities import *
+
+# ssh
+from hsn1.adp import Atlas
+from hsn1.densecrf import DenseCRF
+from hsn1.gradcam import GradCAM
+from hsn1.histonet import HistoNet
+from hsn1.utilities import mkdir_if_nexist, read_image, crop_into_patches, read_segmask, segmask_to_class_inds, \
+     get_legends, save_patchconfidence, stitch_patch_activations, maxconf_class_as_colour, save_pred_segmasks, \
+   save_cs_gradcam, cs_gradcam_to_class_inds, gradcam_as_continuous, export_summary_image, save_glas_bmps, heatmap
+from hsn1.utilities import *
+
 # 重叠率？
 OVERLAY_R = 0.75
 
@@ -30,25 +41,25 @@ class HistoSegNetV1:
         self.batch_size = params['batch_size'] # 输入图像的批量大小
        
         # htt_mode -- 从图像中分割的类的类型  {'both', 'morph', 'func', 'glas'} 
-	    #（both -- morph && func
-		# morph -- morphological 形态学类型
-		# func -- functional 功能类型
-		# glas -- glandular 腺体or非腺体）
+        #（both -- morph && func
+        # morph -- morphological 形态学类型
+        # func -- functional 功能类型
+        # glas -- glandular 腺体or非腺体）
         self.htt_mode = params['htt_mode']
         
         self.gt_mode = params['gt_mode'] # 是否根据ground-truth注释评估分割结果 {'on', 'off'}
         
         # run_level -- 在HistoSegNet运行的最后阶段 {1, 2, 3}
-		#（1 -- the first stage CNN confidence scores 类置信得分阶段
-		# 2 -- the third stage modified Grad-CAMs 改良的梯度加权类激活映射阶段
-		# 3 -- the fourth stage dense CRF segmentation masks 密集条件随机场分割掩码）
+        #（1 -- the first stage CNN confidence scores 类置信得分阶段
+        # 2 -- the third stage modified Grad-CAMs 改良的梯度加权类激活映射阶段
+        # 3 -- the fourth stage dense CRF segmentation masks 密集条件随机场分割掩码）
         self.run_level = params['run_level']
         
         # save_types -- 要保存用于调试的类型 [{0, 1}, {0, 1}, {0, 1}, {0, 1}]
-		#（HTT confidence scores: save (1), do not save (0)
-		# Continuous Grad-CAMs: save (1), do not save (0)
-		# Discrete segmentation masks: save (1), do not save (0)
-		# Summary images: save (1), do not save (0)
+        #（HTT confidence scores: save (1), do not save (0)
+        # Continuous Grad-CAMs: save (1), do not save (0)
+        # Discrete segmentation masks: save (1), do not save (0)
+        # Summary images: save (1), do not save (0)
         self.save_types = params['save_types']
         
         self.verbosity = params['verbosity'] # 调试消息的详细程度 {'NORMAL', 'QUIET'}
@@ -78,9 +89,9 @@ class HistoSegNetV1:
 
         # 定义文件夹路径
         cur_path = os.path.abspath(os.path.curdir)
-        self.data_dir = os.path.join(cur_path, 'hsn/data')
-        self.gt_dir = os.path.join(cur_path, 'hsn/gt')
-        self.img_dir = os.path.join(cur_path, 'hsn/img')
+        self.data_dir = os.path.join(cur_path, 'data')
+        self.gt_dir = os.path.join(cur_path, 'gt')
+        self.img_dir = os.path.join(cur_path, 'img')
         self.tmp_dir = os.path.join(cur_path, 'tmp', self.input_name)
         self.out_dir = os.path.join(cur_path, 'out', self.input_name)
         input_dir = os.path.join(self.img_dir, self.input_name)
@@ -191,10 +202,10 @@ class HistoSegNetV1:
             start_time = time.time() # 记录开始时间
         input_dir = os.path.join(self.img_dir, self.input_name) # 定义输入文件夹
         if self.input_mode == 'patch': 
-	    # os.listdir() -- 返回指定的文件夹包含的文件或文件夹的名字的列表
-	    # os.path.join() -- 判断对象(需提供绝对路径)是否为文件
-	    # os.path.splitext() -- 分离文件名与拓展名
-	    # 检查文件路径合法性
+        # os.listdir() -- 返回指定的文件夹包含的文件或文件夹的名字的列表
+        # os.path.join() -- 判断对象(需提供绝对路径)是否为文件
+        # os.path.splitext() -- 分离文件名与拓展名
+        # 检查文件路径合法性
             self.input_files_all = [x for x in os.listdir(input_dir) if os.path.isfile(os.path.join(input_dir, x)) and
                                     os.path.splitext(x)[-1].lower() == '.png']
         elif self.input_mode == 'wsi':
@@ -208,9 +219,9 @@ class HistoSegNetV1:
         """Find HTT log inverse frequencies"""
 
         if self.gt_mode == 'on':
-	    # 定义 转化为对数逆频率 函数
+        # 定义 转化为对数逆频率 函数
             def convert_to_log_freq(x):
-		# np.where(condition) -- 返回满足 condition 的元素坐标
+        # np.where(condition) -- 返回满足 condition 的元素坐标
                 is_zero = np.where(x == 0) # 满足x == 0 的坐标
                 x_log = np.log(x)
                 x_log[is_zero] = 0
@@ -296,7 +307,7 @@ class HistoSegNetV1:
                 print(' (%s seconds)' % (time.time() - start_time))
 
             # c. 使用 HistoSegNetV1 分割图像，如果需要，可以从 tmp 文件保存/加载
-	    # Segment image(s) with HistoSegNetV1, saving/loading to/from tmp files if so request
+        # Segment image(s) with HistoSegNetV1, saving/loading to/from tmp files if so request
             if self.verbosity == 'NORMAL':
                 print('\t\tSegmenting images')
                 start_time = time.time()
@@ -347,8 +358,8 @@ class HistoSegNetV1:
             self.orig_images[iter_input_file] = read_image(input_path)
             self.orig_sizes[iter_input_file] = self.orig_images[iter_input_file].shape[:2]
             downsampled_size = [round(x / self.down_fac) for x in self.orig_sizes[iter_input_file]]
-	    
-	    # 如果下采样图像小于补丁大小，则先镜像，然后下采样
+
+        # 如果下采样图像小于补丁大小，则先镜像，然后下采样
             # If downsampled image is smaller than the patch size, then mirror pad first, then downsample
             if downsampled_size[0] < self.input_size[0] or downsampled_size[1] < self.input_size[1]:
                 pad_vert = math.ceil( # ceil() -- 返回其上入整数（向上取整）

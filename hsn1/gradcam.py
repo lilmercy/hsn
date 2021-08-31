@@ -5,7 +5,7 @@ import cv2
 from scipy.ndimage import gaussian_filter
 import scipy
 import matplotlib.pyplot as plt
-
+np.seterr(invalid='ignore') # 取消一些warning -- local
 # Grad-CAM（梯度加权类别激活映射）及 HTT（histological tissue type, 组织学类型）modifications 修改类
 class GradCAM:
     """Class for Grad-CAM and HTT modifications"""

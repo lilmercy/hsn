@@ -39,11 +39,13 @@ class HistoNet:
         self.model.load_weights(model_h5_path)
 
         # 评估模型
-        # SGD -- 随机梯度下降优化器
         # optimizers.SGD(lr=0.01, momentum=0.0, decay=0.0, nesterov=False)
         # lr -- 学习率（大于或等于零的浮点数）, momentum -- 动量参数（大于或等于零的浮点数）
         # decay -- 学习率衰减值（大于或等于零的浮点数）, nesterov -- 确定是否使用Nesterov动量（布尔值）
-        opt = optimizers.SGD(lr=0.1, decay=1e-6, momentum=0.9, nesterov=True) 
+        # SGD -- 随机梯度下降优化器
+        opt = optimizers.SGD(lr=1e-2, decay=1e-6, momentum=0.9, nesterov=True)
+        # Adam --
+        # opt = optimizers.Adam(lr=1e-3, beta_1=0.9, beta_2=0.999, epsilon=1e-8, kappa=1-1e-8)
         # loss -- 损失函数 -- 二元交叉熵, optimizer -- 优化器 -- opt(SGD), metrics -- 准确率 -- 二元准确率
         # keras.metrics.binary-aacuracy(y_true, y_pred, threshoud=0.5)
         # 计算方法: 比如有6个样本，其y_true为[0, 0, 0, 1, 1, 0]，y_pred为[0.2, 0.3, 0.6, 0.7, 0.8, 0.1]，那么其binary_accuracy=5/6=87.5%。
