@@ -36,7 +36,10 @@ hsn.analyze_img()
 # 加载 HistoNet
 print("step5 -- load the histonet")
 hsn.load_histonet(params={'model_name': MODEL_NAME})
+# 查看 HistoNet 的 model 细节
+# print(hsn.hn.model.summary())
 
 # 批量操作
 print("step6 -- run the batch")
 hsn.run_batch()
+print("-------- finish ---------")

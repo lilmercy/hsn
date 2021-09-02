@@ -203,7 +203,7 @@ class HistoSegNetV1:
         input_dir = os.path.join(self.img_dir, self.input_name) # 定义输入文件夹
         if self.input_mode == 'patch': 
         # os.listdir() -- 返回指定的文件夹包含的文件或文件夹的名字的列表
-        # os.path.join() -- 判断对象(需提供绝对路径)是否为文件
+        # os.path.isfile() -- 判断对象(需提供绝对路径)是否为文件
         # os.path.splitext() -- 分离文件名与拓展名
         # 检查文件路径合法性
             self.input_files_all = [x for x in os.listdir(input_dir) if os.path.isfile(os.path.join(input_dir, x)) and

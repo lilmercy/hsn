@@ -35,6 +35,7 @@ hsn.analyze_img()
 # Loading HistoNet
 print("step6 -- load the HistoNet")
 hsn.load_histonet(params={'model_name': MODEL_NAME})
+# print(hsn.hn.model.summary())
 
 # Batch-wise operation
 print("step7 -- run with batch-wise")
