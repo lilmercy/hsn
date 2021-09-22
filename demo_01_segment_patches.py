@@ -1,7 +1,7 @@
 # GPU test
-#import os
-# 使用第一张GPU
-#os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+import os
+# 使用第3张GPU
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 
 # 用户自定义设置
 from hsn1 import hsn_v1

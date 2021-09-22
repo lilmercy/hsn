@@ -26,8 +26,7 @@ morph_seg_path = os.path.join(out_path, 'patch', '132_R02.png_crop_7.png')
 # ground-truth path
 gt_path = os.path.join(cur_path, 'gt')
 morph_gt_path = os.path.join(gt_path, '01_tuning_patch', 'morph', '132_R02.png_crop_7.png')
-# vertical path
-vertical = os.path.join(out_path, 'vertical', '132_R02.png_crop_7.png.png')
+
 
 # set the image
 origin_img = mpimg.imread(origin_path)
@@ -37,7 +36,7 @@ ablative_GradCAM_img = mpimg.imread(ablative_GradCAM)
 overlay_img = mpimg.imread(overlay)
 morph_seg_img = mpimg.imread(morph_seg_path)
 morph_gt_img = mpimg.imread(morph_gt_path)
-vertical_img = mpimg.imread(vertical)
+
 
 # the origin image
 plt.imshow(origin_img) # 显示图片
@@ -81,8 +80,3 @@ plt.axis('off') # 不显示坐标轴
 plt.title('the morph ground-truth')
 plt.show()
 
-# the vertical
-plt.imshow(vertical_img) # 显示图片
-plt.axis('off') # 不显示坐标轴
-plt.title('the vertical')
-plt.show()
